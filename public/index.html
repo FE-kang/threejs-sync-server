@@ -27,7 +27,7 @@
             <div id="header">
                 <h2>
                     <span translate="no">three.js</span>
-                    <a id="version" href="http://github.com/mrdoob/three.js/releases">r179</a>
+                    <a id="version" href="http://github.com/mrdoob/three.js/releases">r180</a>
                 </h2>
                 <div id="sections">
                     <a href="manual/#en/creating-a-scene">文档</a>
@@ -44,10 +44,13 @@
                             <a href="examples/#webgl_animation_keyframes">例子</a>
                         </li>
                         <li>
-                            <a href="manual/#en/creating-a-scene">文档</a>
+                            <a href="oldDocs/#api/zh/animation/AnimationAction">中文文档(固定在版本 r180)</a>
                         </li>
                         <li>
-                            <a href="codeview/index.html">源码查看器</a>
+                            <a href="manual/#en/creating-a-scene">英文文档(跟随官方即时更新)</a>
+                        </li>
+                        <li>
+                            <a href="codeview/index.html" target="_blank">源码查看器</a>
                         </li>
                     </ul>
                     <h2 style="font-size: 20px;font-weight: bold;">工具集</h2>
@@ -108,6 +111,20 @@
             var panel = document.getElementById('panel');
             var expandButton = document.getElementById('expandButton');
             var panelScrim = document.getElementById('panelScrim');
+            const version = document.getElementById('version');
+
+            async function getThreeJSVersion() {
+                try {
+                    const response = await fetch('https://api.github.com/repos/mrdoob/three.js/releases/latest');
+                    const data = await response.json();
+                    console.log(response, data, "data");
+                    version.textContent = data.tag_name;
+                } catch (error) {
+                    console.error('获取 Three.js 版本号失败:', error);
+                }
+            }
+
+            getThreeJSVersion();       
 
             expandButton.addEventListener('click', function(event) {
 
@@ -617,7 +634,7 @@
                 </a>
                 <!-- <a href="http://www.insidious-movie.net/entertheroom/" target="_blank" rel="noopener"><img src="files/projects/entertheroom.png" loading="lazy"/></a> -->
                 <!-- <a href="http://news-lab-trends-experiment.appspot.com/" target="_blank" rel="noopener"><img src="files/projects/newslabtrends.png" loading="lazy"/></a> -->
-                <a href="http://www.dennis.video/" target="_blank" rel="noopener">
+                <a href="https://dennis.aaf.nyc/" target="_blank" rel="noopener">
                     <img src="files/projects/dennis.png" loading="lazy"/>
                 </a>
                 <!-- <a href="http://www.fallen.io/ww2/" target="_blank" rel="noopener"><img src="files/projects/fallenio.png" loading="lazy"/></a> -->

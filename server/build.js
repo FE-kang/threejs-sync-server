@@ -53,7 +53,7 @@ async function fixSourceLinks() {
   logger.info('开始修改文档源码链接...');
   
   try {
-    const docsDir = path.join(OUTPUT_DIR, 'docs');
+    const docsDir = path.join(OUTPUT_DIR, 'oldDocs');
     // 递归获取所有 HTML 文件
     const files = await fs.readdir(docsDir, { recursive: true });
     const htmlFiles = files.filter(file => file.endsWith('.html'));
@@ -234,8 +234,10 @@ async function copyWebsiteFiles() {
     const websiteIndex = path.join(OUTPUT_DIR, 'index.html');
     const publicProjects = path.join(publicDir, 'projects');
     const publicCodeview = path.join(publicDir, 'codeview');
+    const publicOldDocs = path.join(publicDir, 'oldDocs');
     const websiteFilesProjects = path.join(OUTPUT_DIR, 'files', 'projects');
     const websiteCodeview = path.join(OUTPUT_DIR, 'codeview');
+    const websiteOldDocs = path.join(OUTPUT_DIR, 'oldDocs');
     const publicExists = await fs.pathExists(publicDir);
     if (publicExists) {
       // 复制 index.html
@@ -266,22 +268,43 @@ async function copyWebsiteFiles() {
       } else {
         logger.warn('public/codeview 目录不存在，跳过复制');
       }
+
+      // 复制 oldDocs 目录到 website/oldDocs
+      const oldDocsExists = await fs.pathExists(publicOldDocs);
+      if (oldDocsExists) {
+        logger.info('复制 public/oldDocs 到 website/oldDocs');
+        await fs.copy(publicOldDocs, websiteOldDocs, { overwrite: true });
+      } else {
+        logger.warn('public/oldDocs 目录不存在，跳过复制');
+      }
     } else {
       logger.warn('public 目录不存在，跳过复制');
     }
-
-    await fixIndexHtmlLinks();
-    
-    // 修复文档中的源码链接
-    await fixSourceLinks();
-    
-    // 修改 prettify.js 中的 CDN 资源路径
-    await fixPageJsResourcePaths();
 
     logger.info('网站文件复制完成');
   } catch (error) {
     logger.error('复制网站文件失败:', error);
     throw error;
+  }
+}
+
+/**
+ * 将 manual/index.html 中的 href="../docs/" 替换为 href="../oldDocs/"
+ */
+async function fixManualDocsLink() {
+  const manualIndexPath = path.join(OUTPUT_DIR, 'manual', 'index.html');
+  const exists = await fs.pathExists(manualIndexPath);
+  if (exists) {
+    let content = await fs.readFile(manualIndexPath, 'utf8');
+    const replaced = content.replace(/href="\.\.\/docs\/"/g, 'href="../oldDocs/#api/zh/animation/AnimationAction"');
+    if (replaced !== content) {
+      await fs.writeFile(manualIndexPath, replaced, 'utf8');
+      logger.info('已修正 manual/index.html 中的 docs 链接为 oldDocs');
+    } else {
+      logger.info('manual/index.html 未发现需要替换的 docs 链接');
+    }
+  } else {
+    logger.warn('manual/index.html 文件不存在，跳过');
   }
 }
 
@@ -308,6 +331,21 @@ async function main() {
     
     // 复制网站文件
     await copyWebsiteFiles();
+
+    // 修复 website中 各 index.html 页面中的链接
+    await fixIndexHtmlLinks();
+    
+    // 修复文档中的源码链接
+    await fixSourceLinks();
+
+    // 在 main() 中调用
+    await fixManualDocsLink();
+    
+    // 修改manual首页 docs 超链接到中文旧文档
+    await fixManualDocsLink();
+
+    // 修改 prettify.js 中的 CDN 资源路径
+    // await fixPageJsResourcePaths();
     
     logger.info(`Three.js官网构建完成，输出目录: ${OUTPUT_DIR}`);
   } catch (error) {
