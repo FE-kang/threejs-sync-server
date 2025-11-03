@@ -21,7 +21,7 @@
 
 				<div id="sections">
 					<span class="selected">docs</span>
-					<a href="../manual/">manual</a>
+					<a href="../manual/#zh/fundamentals">manual</a>
 				</div>
 
 				<div id="expandButton"></div>
@@ -34,13 +34,8 @@
 					<input placeholder="" type="text" id="filterInput" autocorrect="off" autocapitalize="off" spellcheck="false" />
 					<div id="clearSearchButton"></div>
 					<select id="language">
-						<option value="en">en</option>
-						<option value="ar">ar</option>
-						<option value="ko">한국어</option>
 						<option value="zh">中文</option>
-						<option value="it">it</option>
-						<option value="pt-br">pt-br</option>
-						<option value="fr">fr</option>
+						<option value="en">en</option>
 					</select>
 				</div>
 				<div id="content"></div>
@@ -87,7 +82,7 @@
 
 			// Localisation
 
-			let language = 'en';
+			let language = 'zh';
 
 			if ( /^(api|manual|examples)/.test( hash ) ) {
 

@@ -1,16 +1,10 @@
 if ( ! window.frameElement && window.location.protocol !== 'file:' ) {
 
-	// navigates to docs home if direct access, e.g.
-	//   https://mrdoob.github.io/three.js/docs/api/en/audio/Audio.html#filter
-	// ->https://mrdoob.github.io/three.js/docs/#api/en/audio/Audio.filter
-
 	const url = new URL( window.location.href );
 
-	// hash route, e.g. #api/en/audio/Audio.filter
-	url.hash = url.pathname.replace( /\/docs\/(.*?)(?:\.html)?$/, '$1' ) + url.hash.replace( '#', '.' );
+	url.hash = url.pathname.replace( /\/oldDocs\/(.*?)(?:\.html)?$/, '$1' ) + url.hash.replace( '#', '.' );
 
-	// docs home, e.g. https://mrdoob.github.io/three.js/docs/
-	url.pathname = url.pathname.replace( /(\/docs\/).*$/, '$1' );
+	url.pathname = url.pathname.replace( /(\/oldDocs\/).*$/, '$1' );
 
 	window.location.replace( url );
 
@@ -175,8 +169,8 @@ function onDocumentLoad() {
 	button.id = 'button';
 	button.innerHTML = '<img src="../files/ic_mode_edit_black_24dp.svg">';
 	button.addEventListener( 'click', function () {
-
-		window.open( 'https://github.com/mrdoob/three.js/blob/dev/docs/' + section + '/' + localizedPath + '.html' );
+		const names = localizedPath.split('/')
+		window.open( 'https://github.com/mrdoob/three.js/blob/dev/docs/pages/' + names[names.length - 1] + '.html' );
 
 	}, false );
 
@@ -185,18 +179,18 @@ function onDocumentLoad() {
 	// Syntax highlighting
 
 	const styleBase = document.createElement( 'link' );
-	styleBase.href = pathname.substring( 0, pathname.indexOf( 'docs' ) + 4 ) + '/prettify/prettify.css';
+	styleBase.href = pathname.substring( 0, pathname.indexOf( 'oldDocs' ) + 7 ) + '/prettify/prettify.css';
 	styleBase.rel = 'stylesheet';
 
 	const styleCustom = document.createElement( 'link' );
-	styleCustom.href = pathname.substring( 0, pathname.indexOf( 'docs' ) + 4 ) + '/prettify/threejs.css';
+	styleCustom.href = pathname.substring( 0, pathname.indexOf( 'oldDocs' ) + 7 ) + '/prettify/threejs.css';
 	styleCustom.rel = 'stylesheet';
 
 	document.head.appendChild( styleBase );
 	document.head.appendChild( styleCustom );
 
 	const prettify = document.createElement( 'script' );
-	prettify.src = pathname.substring( 0, pathname.indexOf( 'docs' ) + 4 ) + '/prettify/prettify.js';
+	prettify.src = pathname.substring( 0, pathname.indexOf( 'oldDocs' ) + 7 ) + '/prettify/prettify.js';
 
 	prettify.onload = function () {
 
