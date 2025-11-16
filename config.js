@@ -6,10 +6,7 @@ const path = require('path');
 
 module.exports = {
   // GitHub仓库URL
-  repoUrl: 'https://github.com/mrdoob/three.js.git',
-  
-  // 备用仓库URL (Gitee镜像，国内访问更快)
-  backupRepoUrl: 'https://gitee.com/mirrors/three.js.git',
+  repoUrl: 'https://gitee.com/mirrors/three.js.git',
   
   // 本地仓库路径
   repoPath: path.join(__dirname, 'three.js-repo'),

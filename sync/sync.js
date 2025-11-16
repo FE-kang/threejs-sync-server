@@ -5,8 +5,7 @@ const { createLogger } = require('../utils/logger/logger');
 const config = require('../config');
 
 // 从配置文件获取参数
-const THREEJS_REPO = config.backupRepoUrl || 'https://gitee.com/mirrors/three.js.git'; // 使用Gitee镜像作为主要仓库
-const BACKUP_REPO = config.repoUrl || 'https://github.com/mrdoob/three.js.git'; // GitHub作为备用
+const REPO = config.repoUrl || 'https://github.com/mrdoob/three.js.git';
 const LOCAL_PATH = config.repoPath;
 const MAX_RETRIES = config.sync?.maxRetries || 3;
 const RETRY_DELAY = config.sync?.retryDelay || 5000; // 5秒
@@ -49,11 +48,6 @@ async function gitCloneWithRetry(repo, targetPath, retries = MAX_RETRIES) {
       await delay(RETRY_DELAY);
       return gitCloneWithRetry(repo, targetPath, retries - 1);
     } else {
-      // 如果是主仓库失败且有备用仓库，尝试备用仓库
-      if (repo === THREEJS_REPO && BACKUP_REPO) {
-        logger.info(`主仓库克隆失败，尝试使用备用镜像: ${BACKUP_REPO}`);
-        return gitCloneWithRetry(BACKUP_REPO, targetPath, MAX_RETRIES);
-      }
       throw new Error(`克隆仓库失败，已达到最大重试次数: ${error.message}`);
     }
   }
@@ -101,7 +95,7 @@ async function syncThreeJsRepo() {
       await fs.ensureDir(LOCAL_PATH);
       
       try {
-        await gitCloneWithRetry(THREEJS_REPO, LOCAL_PATH);
+        await gitCloneWithRetry(REPO, LOCAL_PATH);
       } catch (cloneError) {
         // 如果所有克隆尝试都失败
         logger.error('所有克隆尝试均失败:', cloneError);
@@ -122,7 +116,7 @@ async function syncThreeJsRepo() {
         await fs.ensureDir(LOCAL_PATH);
         
         try {
-          await gitCloneWithRetry(THREEJS_REPO, LOCAL_PATH);
+          await gitCloneWithRetry(REPO, LOCAL_PATH);
         } catch (cloneError) {
           // 如果所有克隆尝试都失败
           logger.error('所有克隆尝试均失败:', cloneError);
@@ -147,29 +141,13 @@ async function syncThreeJsRepo() {
             
             try {
               // 尝试重新设置远程仓库地址
-              await git.remote(['set-url', 'origin', THREEJS_REPO]);
+              await git.remote(['set-url', 'origin', REPO]);
               await gitPullWithRetry(git);
             } catch (resetError) {
-              // 如果重置远程仓库后仍然失败，尝试使用备用仓库
-              if (BACKUP_REPO) {
-                logger.warn(`尝试使用备用镜像仓库: ${BACKUP_REPO}`);
-                try {
-                  await git.remote(['set-url', 'origin', BACKUP_REPO]);
-                  await gitPullWithRetry(git);
-                } catch (backupError) {
-                  // 如果备用仓库也失败，删除并重新克隆
-                  logger.error('使用备用仓库也失败，将删除并重新克隆:', backupError);
-                  await fs.remove(LOCAL_PATH);
-                  await fs.ensureDir(LOCAL_PATH);
-                  await gitCloneWithRetry(THREEJS_REPO, LOCAL_PATH);
-                }
-              } else {
-                // 如果没有备用仓库，删除并重新克隆
-                logger.error('重置远程仓库后仍然失败，将删除并重新克隆:', resetError);
-                await fs.remove(LOCAL_PATH);
-                await fs.ensureDir(LOCAL_PATH);
-                await gitCloneWithRetry(THREEJS_REPO, LOCAL_PATH);
-              }
+              logger.error('重置远程仓库后仍然失败，将删除并重新克隆:', resetError);
+              await fs.remove(LOCAL_PATH);
+              await fs.ensureDir(LOCAL_PATH);
+              await gitCloneWithRetry(REPO, LOCAL_PATH);
             }
           }
         } catch (pullError) {
@@ -178,7 +156,7 @@ async function syncThreeJsRepo() {
           logger.warn('将删除损坏的仓库并重新克隆...');
           await fs.remove(LOCAL_PATH);
           await fs.ensureDir(LOCAL_PATH);
-          await gitCloneWithRetry(THREEJS_REPO, LOCAL_PATH);
+          await gitCloneWithRetry(REPO, LOCAL_PATH);
         }
       }
     }
@@ -186,7 +164,6 @@ async function syncThreeJsRepo() {
     logger.info('同步操作成功完成！');
   } catch (error) {
     logger.error('同步过程中发生错误:', error);
-    logger.error(error.stack || error.toString());
     throw error; // 重新抛出错误，让调用者知道同步失败
   }
 }
