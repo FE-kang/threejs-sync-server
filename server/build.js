@@ -24,24 +24,39 @@ async function fixIndexHtmlLinks() {
 /**
  * 修改 prettify.js 中的 CDN 资源路径为本地路径
  */
-async function fixPageJsResourcePaths() {
+async function fixFfmpegPath() {
   logger.info('开始修改 prettify.js 中的 CDN 资源路径...');
   
   try {
-    const prettifyJsPath = path.join(OUTPUT_DIR, 'docs/prettify/prettify.js');
-    let content = await fs.readFile(prettifyJsPath, 'utf8');
     
-    // 替换 CDN 资源路径为本地路径
-    content = content.replace(
-      /https:\/\/cdn\.jsdelivr\.net\/gh\/google\/code-prettify@master\/loader\/prettify\.css/g,
-      '/docs/prettify/prettify.css'
-    );
-    
-    await fs.writeFile(prettifyJsPath, content, 'utf8');
-    logger.info('已修改 prettify.js 中的 CDN 资源路径');
-    
+    const publicFfmpeg = path.join(__dirname, '../public/ffmpeg/ffmpeg.min.js');
+    const editorJsDir = path.join(OUTPUT_DIR, 'editor/js');
+    const editorIndex = path.join(OUTPUT_DIR, 'editor/index.html');
+    const hasFfmpeg = await fs.pathExists(publicFfmpeg);
+    if (hasFfmpeg) {
+      await fs.ensureDir(editorJsDir);
+      await fs.copy(publicFfmpeg, path.join(editorJsDir, 'ffmpeg.min.js'), { overwrite: true });
+      const editorExists = await fs.pathExists(editorIndex);
+      if (editorExists) {
+        let editorHtml = await fs.readFile(editorIndex, 'utf8');
+        const replacedEditorHtml = editorHtml.replace(
+          /<script src="https:\/\/cdn\.jsdelivr\.net\/npm\/@ffmpeg\/ffmpeg@[^"']+\/dist\/ffmpeg\.min\.js"><\/script>/,
+          '<script src="js/ffmpeg\.min\.js"><\/script>'
+        );
+        if (replacedEditorHtml !== editorHtml) {
+          await fs.writeFile(editorIndex, replacedEditorHtml, 'utf8');
+          logger.info('已修改 editor/index.html 中的 ffmpeg 引用为本地路径');
+        } else {
+          logger.info('editor/index.html 中未找到需要替换的 ffmpeg 引用');
+        }
+      } else {
+        logger.warn('editor/index.html 文件不存在，跳过 ffmpeg 引用替换');
+      }
+    } else {
+      logger.warn('public/ffmpeg/ffmpeg.min.js 不存在，无法本地化 ffmpeg 引用');
+    }
   } catch (error) {
-    logger.error('修改 prettify.js 时出错:', error);
+    logger.error('修改 ffmpeg.min.js 时出错:', error);
     throw error;
   }
 }
@@ -344,8 +359,7 @@ async function main() {
     // 修改manual首页 docs 超链接到中文旧文档
     await fixManualDocsLink();
 
-    // 修改 prettify.js 中的 CDN 资源路径
-    // await fixPageJsResourcePaths();
+    await fixFfmpegPath();
     
     logger.info(`Three.js官网构建完成，输出目录: ${OUTPUT_DIR}`);
   } catch (error) {
