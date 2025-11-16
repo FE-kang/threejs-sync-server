@@ -1,8 +1,8 @@
-const simpleGit = require('simple-git');
-const fs = require('fs-extra');
-const path = require('path');
-const { createLogger } = require('../utils/logger/logger');
-const config = require('../config');
+import simpleGit, { SimpleGit } from 'simple-git';
+import fs from 'fs-extra';
+import path from 'path';
+import { createLogger } from '../utils/logger/logger';
+import config from '../config';
 
 // 从配置文件获取参数
 const REPO = config.repoUrl || 'https://github.com/mrdoob/three.js.git';
@@ -13,9 +13,7 @@ const RETRY_DELAY = config.sync?.retryDelay || 5000; // 5秒
 // 创建日志记录器
 const logger = createLogger('sync', {
   level: 'info',
-  console: true,
-  maxsize: 5242880, // 5MB
-  maxFiles: 5
+  console: true
 });
 
 /**
@@ -23,7 +21,7 @@ const logger = createLogger('sync', {
  * @param {number} ms 延迟毫秒数
  * @returns {Promise} 延迟Promise
  */
-function delay(ms) {
+function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
@@ -34,21 +32,23 @@ function delay(ms) {
  * @param {number} retries 重试次数
  * @returns {Promise} 克隆结果
  */
-async function gitCloneWithRetry(repo, targetPath, retries = MAX_RETRIES) {
+async function gitCloneWithRetry(repo: string, targetPath: string, retries = MAX_RETRIES): Promise<boolean> {
   try {
     logger.info(`尝试克隆仓库: ${repo}`);
     await simpleGit().clone(repo, targetPath);
     logger.info('仓库克隆成功！');
     return true;
   } catch (error) {
-    logger.error(`克隆失败: ${error.message}`);
+    const e = error as Error;
+    logger.error(`克隆失败: ${e.message}`);
     
     if (retries > 0) {
       logger.info(`将在${RETRY_DELAY/1000}秒后重试，剩余重试次数: ${retries-1}`);
       await delay(RETRY_DELAY);
       return gitCloneWithRetry(repo, targetPath, retries - 1);
     } else {
-      throw new Error(`克隆仓库失败，已达到最大重试次数: ${error.message}`);
+      const e = error as Error;
+      throw new Error(`克隆仓库失败，已达到最大重试次数: ${e.message}`);
     }
   }
 }
@@ -59,21 +59,23 @@ async function gitCloneWithRetry(repo, targetPath, retries = MAX_RETRIES) {
  * @param {number} retries 重试次数
  * @returns {Promise} 拉取结果
  */
-async function gitPullWithRetry(git, retries = MAX_RETRIES) {
+async function gitPullWithRetry(git: SimpleGit, retries = MAX_RETRIES): Promise<boolean> {
   try {
     logger.info('尝试拉取最新代码...');
     await git.pull();
     logger.info('代码拉取成功！');
     return true;
   } catch (error) {
-    logger.error(`拉取失败: ${error.message}`);
+    const e = error as Error;
+    logger.error(`拉取失败: ${e.message}`);
     
     if (retries > 0) {
       logger.info(`将在${RETRY_DELAY/1000}秒后重试，剩余重试次数: ${retries-1}`);
       await delay(RETRY_DELAY);
       return gitPullWithRetry(git, retries - 1);
     } else {
-      throw new Error(`拉取代码失败，已达到最大重试次数: ${error.message}`);
+      const e = error as Error;
+      throw new Error(`拉取代码失败，已达到最大重试次数: ${e.message}`);
     }
   }
 }
@@ -81,7 +83,7 @@ async function gitPullWithRetry(git, retries = MAX_RETRIES) {
 /**
  * 同步Three.js仓库到本地
  */
-async function syncThreeJsRepo() {
+export async function syncThreeJsRepo(): Promise<void> {
   try {
     logger.info('开始同步Three.js仓库...');
     logger.info(`时间: ${new Date().toLocaleString()}`);
@@ -172,5 +174,3 @@ async function syncThreeJsRepo() {
 if (require.main === module) {
   syncThreeJsRepo();
 }
-
-module.exports = { syncThreeJsRepo, logger };

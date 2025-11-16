@@ -2,21 +2,59 @@
  * 项目配置文件
  */
 
-const path = require('path');
+//
+import { resolveRoot } from './utils/paths';
 
-module.exports = {
+export interface LogsConfig {
+  dir: string;
+  level: 'error' | 'warn' | 'info' | 'http' | 'verbose' | 'debug' | 'silly';
+  maxSize: string;
+  maxFiles: number;
+}
+
+export interface SyncConfig {
+  schedule: string;
+  syncOnStart: boolean;
+  buildAfterSync: boolean;
+  timeout: number;
+  maxRetries: number;
+  retryDelay: number;
+}
+
+export interface BuildConfig {
+  tryFullBuild: boolean;
+  fallbackToMinimal: boolean;
+  timeout: number;
+}
+
+export interface ServerConfig {
+  port: number;
+  host: string;
+}
+
+export interface Config {
+  repoUrl: string;
+  repoPath: string;
+  websitePath: string;
+  logs: LogsConfig;
+  sync: SyncConfig;
+  build: BuildConfig;
+  server: ServerConfig;
+}
+
+const config: Config = {
   // GitHub仓库URL
   repoUrl: 'https://gitee.com/mirrors/three.js.git',
   
   // 本地仓库路径
-  repoPath: path.join(__dirname, 'three.js-repo'),
+  repoPath: resolveRoot('three.js-repo'),
   
   // 网站输出目录
-  websitePath: path.join(__dirname, 'website'),
+  websitePath: resolveRoot('website'),
   
   // 日志配置
   logs: {
-    dir: path.join(__dirname, 'logs'),
+    dir: resolveRoot('logs'),
     level: 'info',
     maxSize: '10m',
     maxFiles: 10
@@ -62,3 +100,5 @@ module.exports = {
     host: '0.0.0.0'
   }
 };
+
+export default config;

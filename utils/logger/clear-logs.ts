@@ -1,9 +1,9 @@
-const { clearLog, clearAllLogs } = require('./logger');
+import { clearLog, clearAllLogs } from './logger';
 
 /**
  * 清空日志文件的命令行工具
  */
-function main() {
+function main(): void {
   const args = process.argv.slice(2);
   
   // 如果没有参数，显示帮助信息
@@ -28,7 +28,7 @@ function main() {
   }
   
   // 清空指定的日志文件
-  const filename = args[0];
+  const filename = args[0] as string;
   const success = clearLog(filename);
   
   if (success) {

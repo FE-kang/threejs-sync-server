@@ -1,7 +1,50 @@
-/**
- * 批量替换 website/docs、examples、manual 下 index.html 文件中的 threejs.org 链接
- */
-async function fixIndexHtmlLinks() {
+import { execSync } from 'child_process';
+import fs from 'fs-extra';
+import path from 'path';
+import { createLogger } from '../utils/logger/logger';
+import config from '../config';
+import { resolveRoot } from '../utils/paths';
+
+const logger = createLogger('build', { level: 'info', console: true });
+const THREEJS_REPO_PATH = config.repoPath;
+const OUTPUT_DIR = config.websitePath;
+
+function runCommand(command: string, cwd: string, timeout = 600000): string {
+  logger.info(`执行命令: ${command}`);
+  logger.info(`工作目录: ${cwd}`);
+  logger.info(`超时设置: ${timeout / 1000}秒`);
+  try {
+    const output = execSync(command, {
+      cwd,
+      encoding: 'utf8',
+      stdio: 'pipe',
+      timeout
+    });
+    if (output) {
+      logger.info(`命令输出: \n${output}`);
+    }
+    logger.info(`命令执行成功: ${command}`);
+    return output;
+  } catch (error) {
+    const err = error as Error & { stdout?: Buffer; stderr?: Buffer; signal?: string };
+    if (err.stdout) {
+      logger.error(`命令标准输出: \n${err.stdout.toString()}`);
+    }
+    if (err.stderr) {
+      logger.error(`命令错误输出: \n${err.stderr.toString()}`);
+    }
+    if (err.signal === 'SIGTERM') {
+      logger.error(`命令执行超时: ${command}`);
+      throw new Error(`命令执行超时: ${command}`);
+    } else {
+      logger.error(`命令执行失败: ${command}`);
+      logger.error(err.message);
+      throw err;
+    }
+  }
+}
+
+async function fixIndexHtmlLinks(): Promise<void> {
   const targetDirs = ['docs', 'examples', 'manual'];
   for (const dir of targetDirs) {
     const indexPath = path.join(OUTPUT_DIR, dir, 'index.html');
@@ -24,12 +67,12 @@ async function fixIndexHtmlLinks() {
 /**
  * 修改 prettify.js 中的 CDN 资源路径为本地路径
  */
-async function fixFfmpegPath() {
+async function fixFfmpegPath(): Promise<void> {
   logger.info('开始修改 prettify.js 中的 CDN 资源路径...');
   
   try {
     
-    const publicFfmpeg = path.join(__dirname, '../public/ffmpeg/ffmpeg.min.js');
+    const publicFfmpeg = resolveRoot('public', 'ffmpeg', 'ffmpeg.min.js');
     const editorJsDir = path.join(OUTPUT_DIR, 'editor/js');
     const editorIndex = path.join(OUTPUT_DIR, 'editor/index.html');
     const hasFfmpeg = await fs.pathExists(publicFfmpeg);
@@ -64,14 +107,26 @@ async function fixFfmpegPath() {
 /**
  * 修改文档中的源码链接为本地链接
  */
-async function fixSourceLinks() {
+async function fixSourceLinks(): Promise<void> {
   logger.info('开始修改文档源码链接...');
   
   try {
     const docsDir = path.join(OUTPUT_DIR, 'oldDocs');
-    // 递归获取所有 HTML 文件
-    const files = await fs.readdir(docsDir, { recursive: true });
-    const htmlFiles = files.filter(file => file.endsWith('.html'));
+    async function getHtmlFiles(dir: string): Promise<string[]> {
+      const entries = await fs.readdir(dir);
+      const results: string[] = [];
+      for (const entry of entries) {
+        const full = path.join(dir, entry);
+        const stat = await fs.stat(full);
+        if (stat.isDirectory()) {
+          results.push(...(await getHtmlFiles(full)));
+        } else if (entry.endsWith('.html')) {
+          results.push(path.relative(docsDir, full));
+        }
+      }
+      return results;
+    }
+    const htmlFiles = await getHtmlFiles(docsDir);
     
     for (const file of htmlFiles) {
       const filePath = path.join(docsDir, file);
@@ -103,68 +158,19 @@ async function fixSourceLinks() {
  * 该脚本用于构建与Three.js官网一致的本地版本
  */
 
-const { execSync } = require('child_process');
-const fs = require('fs-extra');
-const path = require('path');
-const { createLogger } = require('../utils/logger/logger');
-
-// 创建日志记录器
-const logger = createLogger('build', {
-  level: 'info',
-  console: true
-});
-
-// Three.js仓库路径
-const THREEJS_REPO_PATH = path.join(__dirname, '../three.js-repo');
-// 输出目录
-const OUTPUT_DIR = path.join(__dirname, '../website');
+// 上移到文件顶部的导入与常量定义
 
 /**
  * 执行命令并记录输出
  * @param {string} command 要执行的命令
  * @param {string} cwd 工作目录
  */
-function runCommand(command, cwd, timeout = 600000) { // 默认10分钟超时
-  logger.info(`执行命令: ${command}`);
-  logger.info(`工作目录: ${cwd}`);
-  logger.info(`超时设置: ${timeout / 1000}秒`);
-  
-  try {
-    const output = execSync(command, {
-      cwd,
-      encoding: 'utf8',
-      stdio: 'pipe',
-      timeout: timeout // 添加超时设置
-    });
-    // 输出命令执行过程中的内容到日志
-    if (output) {
-      logger.info(`命令输出: \n${output}`);
-    }
-    logger.info(`命令执行成功: ${command}`);
-    return output;
-  } catch (error) {
-    // 如果有标准输出或错误输出，也记录到日志
-    if (error.stdout) {
-      logger.error(`命令标准输出: \n${error.stdout.toString()}`);
-    }
-    if (error.stderr) {
-      logger.error(`命令错误输出: \n${error.stderr.toString()}`);
-    }
-    if (error.signal === 'SIGTERM') {
-      logger.error(`命令执行超时: ${command}`);
-      throw new Error(`命令执行超时: ${command}`);
-    } else {
-      logger.error(`命令执行失败: ${command}`);
-      logger.error(error.message);
-      throw error;
-    }
-  }
-}
+// 已用 TypeScript 重新实现
 
 /**
  * 构建Three.js库文件
  */
-async function buildThreeJs() {
+async function buildThreeJs(): Promise<void> {
   logger.info('开始构建Three.js库文件...');
   
   try {
@@ -177,7 +183,7 @@ async function buildThreeJs() {
       try {
         // 使用--no-fund --no-audit参数加速安装过程
         runCommand('npm install --no-fund --no-audit --loglevel=error', THREEJS_REPO_PATH, 1200000); // 20分钟超时
-      } catch (installError) {
+      } catch {
         logger.warn('完整依赖安装失败，尝试使用--production标志安装最小依赖...');
         // 如果完整安装失败，尝试只安装生产依赖
         runCommand('npm install --production --no-fund --no-audit --loglevel=error', THREEJS_REPO_PATH, 600000);
@@ -209,7 +215,7 @@ async function buildThreeJs() {
 /**
  * 构建Three.js文档
  */
-async function buildDocs() {
+async function buildDocs(): Promise<void> {
   logger.info('开始构建Three.js文档...');
   
   try {
@@ -226,7 +232,7 @@ async function buildDocs() {
 /**
  * 复制网站文件到输出目录
  */
-async function copyWebsiteFiles() {
+async function copyWebsiteFiles(): Promise<void> {
   logger.info('开始复制网站文件...');
   
   try {
@@ -244,7 +250,7 @@ async function copyWebsiteFiles() {
     }
 
     // 复制 public/index.html 到 website 根目录
-    const publicDir = path.join(__dirname, '../public');
+    const publicDir = resolveRoot('public');
     const publicIndex = path.join(publicDir, 'index.html');
     const websiteIndex = path.join(OUTPUT_DIR, 'index.html');
     const publicProjects = path.join(publicDir, 'projects');
@@ -306,7 +312,7 @@ async function copyWebsiteFiles() {
 /**
  * 将 manual/index.html 中的 href="../docs/" 替换为 href="../oldDocs/"
  */
-async function fixManualDocsLink() {
+async function fixManualDocsLink(): Promise<void> {
   const manualIndexPath = path.join(OUTPUT_DIR, 'manual', 'index.html');
   const exists = await fs.pathExists(manualIndexPath);
   if (exists) {
@@ -326,7 +332,7 @@ async function fixManualDocsLink() {
 /**
  * 主函数
  */
-async function main() {
+export async function main(): Promise<void> {
   logger.info('开始构建Three.js官网...');
   
   try {
@@ -371,5 +377,3 @@ async function main() {
 if (require.main === module) {
   main();
 }
-
-module.exports = { main };

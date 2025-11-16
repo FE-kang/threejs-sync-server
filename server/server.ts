@@ -3,11 +3,12 @@
  * 提供Three.js网站的本地访问
  */
 
-const os = require('os');
-const express = require("express");
-const path = require("path");
-const { createLogger } = require("../utils/logger/logger");
-const config = require("../config");
+import os from 'os';
+import express from 'express';
+import path from 'path';
+import { createLogger } from '../utils/logger/logger';
+import config from '../config';
+import pkg from '../package.json';
 
 // 创建日志记录器
 const logger = createLogger("server", {
@@ -18,7 +19,7 @@ const logger = createLogger("server", {
 /**
  * 启动Web服务器
  */
-async function startServer() {
+export async function startServer(): Promise<import('http').Server> {
   const app = express();
   const port = config.server.port;
   const host = config.server.host;
@@ -27,15 +28,15 @@ async function startServer() {
   app.use(express.static(config.websitePath));
 
   // 首页路由
-  app.get("/", (req, res) => {
+  app.get('/', (_req: express.Request, res: express.Response) => {
     res.sendFile(path.join(config.websitePath, "index.html"));
   });
 
   // 状态API
-  app.get("/api/status", (req, res) => {
+  app.get('/api/status', (_req: express.Request, res: express.Response) => {
     res.json({
       status: "running",
-      version: require("../package.json").version,
+      version: pkg.version,
       lastSync: new Date().toISOString(),
     });
   });
@@ -48,7 +49,9 @@ async function startServer() {
         const interfaces = os.networkInterfaces();
         let localIp = "127.0.0.1";
         for (const name of Object.keys(interfaces)) {
-          for (const iface of interfaces[name]) {
+          const list = interfaces[name];
+          if (!list) continue;
+          for (const iface of list) {
             if (iface.family === "IPv4" && !iface.internal) {
               localIp = iface.address;
               break;
@@ -71,7 +74,3 @@ async function startServer() {
 if (require.main === module) {
   startServer();
 }
-
-module.exports = {
-  startServer,
-};

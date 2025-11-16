@@ -3,12 +3,12 @@
  * 定期从GitHub拉取Three.js源码并提供本地访问
  */
 
-const cron = require('node-cron');
-const { syncThreeJsRepo } = require('./sync/sync');
-const { main: buildWebsite } = require('./server/build');
-const { startServer } = require('./server/server');
-const { createLogger } = require('./utils/logger/logger');
-const config = require('./config');
+import cron from 'node-cron';
+import { syncThreeJsRepo } from './sync/sync';
+import { main as buildWebsite } from './server/build';
+import { startServer } from './server/server';
+import { createLogger } from './utils/logger/logger';
+import config from './config';
 
 // 创建日志记录器
 const logger = createLogger('main', {
@@ -19,7 +19,7 @@ const logger = createLogger('main', {
 /**
  * 执行同步任务
  */
-async function runSyncTask() {
+async function runSyncTask(): Promise<void> {
   logger.info('开始执行同步任务...');
   
   try {
@@ -34,21 +34,23 @@ async function runSyncTask() {
       try {
         // 尝试完整构建
         await buildWebsite();
-      } catch (buildError) {
-        logger.warn('完整构建失败:', buildError.message);
+      } catch (error) {
+        const e = error as Error;
+        logger.warn('完整构建失败:', e.message);
       }
     }
     
     logger.info('同步任务完成');
   } catch (error) {
-    logger.error('同步任务失败:', error);
+    const e = error as Error;
+    logger.error('同步任务失败:', e);
   }
 }
 
 /**
  * 启动Web服务器
  */
-async function startWebServer() {
+async function startWebServer(): Promise<import('http').Server> {
   logger.info('正在启动Web服务器...');
   
   try {
@@ -56,15 +58,16 @@ async function startWebServer() {
     logger.info('Web服务器启动成功');
     return server;
   } catch (error) {
-    logger.error('启动Web服务器时发生错误:', error);
-    throw error;
+    const e = error as Error;
+    logger.error('启动Web服务器时发生错误:', e);
+    throw e;
   }
 }
 
 /**
  * 主函数
  */
-async function main() {
+export async function main(): Promise<void> {
   logger.info('Three.js本地镜像服务启动中...');
   
   try {
@@ -82,7 +85,8 @@ async function main() {
     
     logger.info('Three.js本地镜像服务已启动');
   } catch (error) {
-    logger.error('服务启动失败:', error);
+    const e = error as Error;
+    logger.error('服务启动失败:', e);
     process.exit(1);
   }
 }
@@ -91,8 +95,4 @@ async function main() {
 main();
 
 // 导出函数，方便单独使用
-module.exports = {
-  runSyncTask,
-  startWebServer,
-  main
-};
+export { runSyncTask, startWebServer };

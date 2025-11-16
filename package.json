@@ -1,13 +1,14 @@
 {
   "name": "threejs-mirror",
-  "version": "1.0.0",
-  "description": "定期从GitHub拉取Three.js源码并提供本地访问",
-  "main": "index.js",
+  "version": "1.1.0",
+  "description": "定期从GitHub拉取Three.js源码并提供本地化文档、示例、编辑器等...",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node index.js",
-    "sync": "node -e \"require('./sync/sync').syncThreeJsRepo()\"",
-    "build": "node server/build.js",
-    "server": "node server/server.js"
+    "build-ts": "tsc",
+    "start": "npm run build-ts && node dist/index.js",
+    "sync": "npm run build-ts && node dist/sync/sync.js",
+    "build": "npm run build-ts && node dist/server/build.js",
+    "server": "npm run build-ts && node dist/server/server.js"
   },
   "keywords": [
     "threejs",
@@ -23,6 +24,13 @@
     "node-cron": "^3.0.2",
     "simple-git": "^3.19.1",
     "winston": "^3.10.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.25",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.19.25",
+    "@types/node-cron": "^3.0.11",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=14.0.0"
