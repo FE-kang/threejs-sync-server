@@ -1,13 +1,11 @@
 # Three.js 本地镜像服务
 
-这个项目可以定期从GitHub拉取Three.js源码到本地，并提供Web访问界面，方便在本地环境中查看Three.js的文档和示例。
+这个项目可以定期从Gitee拉取Three.js源码到本地，并提供Web访问界面，方便在本地环境中查看Three.js的文档和示例。
 
 ## 功能特点
 
-- 自动定期从GitHub同步Three.js最新代码
-- 支持备用镜像仓库（Gitee），解决国内访问GitHub慢的问题
+- 自动定期从Gitee同步Three.js最新代码
 - 提供本地Web服务器访问Three.js文档和示例
-- 支持完整构建和最小化构建两种模式
 - 完善的日志记录和错误处理机制
 - 可配置的同步计划和构建选项
 
@@ -36,7 +34,6 @@ npm install
 配置文件位于`config.js`，可以根据需要修改以下配置：
 
 - `repoUrl`: Three.js的Gitee镜像仓库URL
-- `backupRepoUrl`: 备用仓库URL（如Github仓库URL）
 - `sync.schedule`: 同步计划（Cron格式，默认值北京时间每天凌晨 2:00 ）
 - `sync.syncOnStart`: 是否在启动时立即同步
 - `server.port`: Web服务器端口
