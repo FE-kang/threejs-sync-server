@@ -240,7 +240,7 @@ async function copyWebsiteFiles(): Promise<void> {
     await fs.ensureDir(OUTPUT_DIR);
 
     // 复制必要的目录
-    const dirsToCopy = ['build', 'docs', 'editor', 'examples', 'manual', 'playground', 'files', 'src'];
+    const dirsToCopy = ['build', 'docs', 'editor', 'examples', 'manual', 'files', 'src'];
 
     for (const dir of dirsToCopy) {
       const srcDir = path.join(THREEJS_REPO_PATH, dir);
