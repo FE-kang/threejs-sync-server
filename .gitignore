@@ -15,6 +15,7 @@ npm-debug.log*
 three.js-repo/
 
 # 构建输出
+dist/
 website/
 
 # 环境变量
