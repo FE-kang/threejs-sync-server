@@ -1,6 +1,6 @@
 {
   "name": "threejs-mirror",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "定期从GitHub拉取Three.js源码并提供本地化文档、示例、编辑器等...",
   "main": "dist/index.js",
   "scripts": {
